@@ -11,8 +11,19 @@ interface ModelOption {
 
 export default function App() {
   const editorRef = useRef<DocxEditorRef>(null);
-  const [documentBuffer, setDocumentBuffer] = useState<ArrayBuffer | null>(null);
-  const [fileName, setFileName] = useState<string>('');
+  const [documentBuffer, setDocumentBuffer] = useState<ArrayBuffer | null>(() => {
+    const saved = localStorage.getItem('docx_editor_buffer');
+    if (saved) {
+      const binaryString = window.atob(saved);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+    return null;
+  });
+  const [fileName, setFileName] = useState<string>(() => localStorage.getItem('docx_editor_filename') || 'Untitled.docx');
   const [agentOpen, setAgentOpen] = useState(true);
   const [editorKey, setEditorKey] = useState(0);
   const [models, setModels] = useState<ModelOption[]>([]);
@@ -28,8 +39,38 @@ export default function App() {
         setModels([
           { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', fast: true },
           { id: 'xiaomi/mimo-v2.5-pro', name: 'MiMo v2.5 Pro', fast: false },
+          { id: 'z-ai/glm-5.1', name: 'GLM 5.1', fast: false },
         ]);
       });
+  }, []);
+
+  // Persist to localStorage
+  useEffect(() => {
+    if (documentBuffer) {
+      const bytes = new Uint8Array(documentBuffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      localStorage.setItem('docx_editor_buffer', window.btoa(binary));
+    }
+    localStorage.setItem('docx_editor_filename', fileName);
+  }, [documentBuffer, fileName]);
+
+  // Periodic auto-save while editing
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const buffer = await editorRef.current?.save();
+      if (buffer) {
+        const bytes = new Uint8Array(buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        localStorage.setItem('docx_editor_buffer', window.btoa(binary));
+      }
+    }, 10000); // Auto-save every 10s
+    return () => clearInterval(interval);
   }, []);
 
   const handleFileDrop = useCallback((e: React.DragEvent) => {
@@ -55,6 +96,14 @@ export default function App() {
   const handleSave = async () => {
     const buffer = await editorRef.current?.save();
     if (buffer) {
+      // Update localStorage with the latest content
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      localStorage.setItem('docx_editor_buffer', window.btoa(binary));
+
       const blob = new Blob([buffer], {
         type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
@@ -77,26 +126,9 @@ export default function App() {
         setEditorKey((k) => k + 1);
       }
     } catch {
-      // Demo fetch failed — user can drag-drop their own file
+      // Demo fetch failed
     }
   };
-
-  if (!documentBuffer) {
-    return (
-      <div style={styles.dropZone} onDrop={handleFileDrop} onDragOver={(e) => e.preventDefault()}>
-        <div style={styles.dropCard}>
-          <div style={styles.dropIcon}>📄</div>
-          <h2 style={styles.dropTitle}>Docx Editor + AI Agent</h2>
-          <p style={styles.dropText}>Drop a <code>.docx</code> file here, or</p>
-          <label style={styles.uploadBtn}>
-            Browse Files
-            <input type="file" accept=".docx" onChange={handleFileSelect} style={{ display: 'none' }} />
-          </label>
-          <button style={styles.demoBtn} onClick={loadDemo}>Load Demo Document</button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div style={styles.app}>

@@ -13,7 +13,7 @@ const openrouter = createOpenAI({
 });
 
 async function runDocxAgent() {
-  const inputFilePath = './Siecineuronowedoanalizyrytmuoddechowego-3.docx'; // Make sure this file exists in D:\docx-agent\
+  const inputFilePath = './document.docx'; // Update this to your file path
   const outputFilePath = './edited-document.docx';
 
   console.log(`Loading ${inputFilePath}...`);

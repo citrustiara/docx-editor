@@ -20,10 +20,6 @@ const openrouter = createOpenAI({
 const MODELS = [
   { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', fast: true },
   { id: 'xiaomi/mimo-v2.5-pro', name: 'MiMo v2.5 Pro', fast: false },
-  { id: 'anthropic/claude-3.5-haiku', name: 'Claude 3.5 Haiku', fast: true },
-  { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', fast: true },
-  { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', fast: false },
-  { id: 'openai/gpt-4o', name: 'GPT-4o', fast: false },
   { id: 'z-ai/glm-5.1', name: 'GLM 5.1', fast: false },
 ];
 

@@ -1,6 +1,8 @@
 # Docx Editor + AI Agent
 
-A visual Word document editor with an integrated AI agent powered by OpenRouter (`xiaomi/mimo-v2.5-pro`).
+![App Showcase](images/Screenshot%202026-05-25%20at%2021-15-56%20Docx%20Editor%20AI%20Agent.png)
+
+A visual Word document editor with an integrated AI agent.
 
 ## Features
 
@@ -53,7 +55,7 @@ export OPENROUTER_API_KEY=sk-or-v1-...
                                ┌────────────────────────┐
                                │  Express Server (3001)  │
                                │  streamText({           │
-                               │    model: 'mimo-v2.5',  │
+                               │    model: selectedModel,│
                                │    tools: getAiSdkTools │
                                │  })                     │
                                └────────────────────────┘
