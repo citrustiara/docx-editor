@@ -140,7 +140,7 @@ export default function App() {
             author="User"
             showToolbar
             showZoomControl
-            mode="suggesting"
+            mode="editing"
           />
         </div>
 

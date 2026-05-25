@@ -24,6 +24,7 @@ const MODELS = [
   { id: 'openai/gpt-4o-mini', name: 'GPT-4o Mini', fast: true },
   { id: 'anthropic/claude-sonnet-4', name: 'Claude Sonnet 4', fast: false },
   { id: 'openai/gpt-4o', name: 'GPT-4o', fast: false },
+  { id: 'z-ai/glm-5.1', name: 'GLM 5.1', fast: false },
 ];
 
 app.get('/api/models', (_req, res) => {

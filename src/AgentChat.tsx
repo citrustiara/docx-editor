@@ -9,6 +9,7 @@ import {
   type EditorRefLike,
 } from '@eigenpal/docx-editor-agents/react';
 import { toAgentMessages } from '@eigenpal/docx-editor-agents/ai-sdk/react';
+import { acceptAllChanges } from '@eigenpal/docx-editor-core/prosemirror/commands';
 
 const SUGGESTIONS = [
   'Summarize this document',
@@ -89,8 +90,10 @@ function getLoopGuardToolCallId(message: any): string | null {
   return null;
 }
 
+import type { DocxEditorRef } from '@eigenpal/docx-editor-react';
+
 interface AgentChatProps {
-  editorRef: React.RefObject<EditorRefLike | null>;
+  editorRef: React.RefObject<DocxEditorRef | null>;
   selectedModel: string;
 }
 
@@ -227,6 +230,19 @@ export default function AgentChat({ editorRef, selectedModel }: AgentChatProps) 
       void runToolCall(toolCall);
     }
   }, [chat.messages, runToolCall]);
+
+  // Auto-accept all tracked changes when AI finishes responding
+  useEffect(() => {
+    if (chat.status === 'ready') {
+      const ref = editorRef.current;
+      if (!ref) return;
+      const pmRef = ref.getEditorRef?.();
+      if (!pmRef) return;
+      const view = pmRef.getView?.();
+      if (!view) return;
+      acceptAllChanges()(view.state, view.dispatch);
+    }
+  }, [chat.status, editorRef]);
 
   useEffect(() => {
     const activeUserTurnKeys = new Set<string>();
