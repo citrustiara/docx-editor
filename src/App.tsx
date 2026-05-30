@@ -27,7 +27,7 @@ export default function App() {
   const [agentOpen, setAgentOpen] = useState(true);
   const [editorKey, setEditorKey] = useState(0);
   const [models, setModels] = useState<ModelOption[]>([]);
-  const [selectedModel, setSelectedModel] = useState('google/gemini-3-flash-preview');
+  const [selectedModel, setSelectedModel] = useState('openai-codex/gpt-5.5');
 
   // Fetch available models on mount
   useEffect(() => {
@@ -37,9 +37,11 @@ export default function App() {
       .catch(() => {
         // Fallback if API not running yet
         setModels([
-          { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', fast: true },
-          { id: 'xiaomi/mimo-v2.5-pro', name: 'MiMo v2.5 Pro', fast: false },
-          { id: 'z-ai/glm-5.1', name: 'GLM 5.1', fast: false },
+          { id: 'openai-codex/gpt-5.5', name: 'Codex GPT-5.5', fast: false },
+          { id: 'openai-codex/gpt-5.3-codex', name: 'Codex GPT-5.3', fast: false },
+          { id: 'openai-codex/gpt-5.3-codex-spark', name: 'Codex GPT-5.3 Spark', fast: true },
+          { id: 'openai-codex/gpt-5.4-mini', name: 'Codex GPT-5.4 Mini', fast: true },
+          { id: 'openai-codex/gpt-5.4', name: 'Codex GPT-5.4', fast: false },
         ]);
       });
   }, []);

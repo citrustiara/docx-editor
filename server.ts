@@ -3,25 +3,48 @@ import cors from 'cors';
 import { createOpenAI } from '@ai-sdk/openai';
 import { streamText, stepCountIs, convertToModelMessages } from 'ai';
 import { getAiSdkTools } from '@eigenpal/docx-editor-agents/ai-sdk/server';
+import { createCodexOpenAIOptions } from './codex-auth.js';
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const openrouter = createOpenAI({
-  baseURL: 'https://openrouter.ai/api/v1',
-  apiKey: process.env.OPENROUTER_API_KEY,
-  headers: {
-    'HTTP-Referer': 'https://localhost:5173',
-    'X-Title': 'Docx Editor Agent',
-  },
-});
+const DEFAULT_MODEL_ID = 'openai-codex/gpt-5.5';
 
 const MODELS = [
-  { id: 'google/gemini-3-flash-preview', name: 'Gemini 3 Flash', fast: true },
-  { id: 'xiaomi/mimo-v2.5-pro', name: 'MiMo v2.5 Pro', fast: false },
-  { id: 'z-ai/glm-5.1', name: 'GLM 5.1', fast: false },
+  { id: 'openai-codex/gpt-5.5', name: 'Codex GPT-5.5', fast: false },
+  { id: 'openai-codex/gpt-5.3-codex', name: 'Codex GPT-5.3', fast: false },
+  { id: 'openai-codex/gpt-5.3-codex-spark', name: 'Codex GPT-5.3 Spark', fast: true },
+  { id: 'openai-codex/gpt-5.4-mini', name: 'Codex GPT-5.4 Mini', fast: true },
+  { id: 'openai-codex/gpt-5.4', name: 'Codex GPT-5.4', fast: false },
 ];
+
+async function resolveSelectedModel(modelId: string | undefined, instructions: string) {
+  const selectedModel = MODELS.find((model) => model.id === modelId)?.id || DEFAULT_MODEL_ID;
+
+  if (selectedModel.startsWith('openai-codex/')) {
+    const codexOptions = await createCodexOpenAIOptions();
+    const codex = createOpenAI({
+      name: 'openai-codex',
+      ...codexOptions,
+    });
+
+    return {
+      model: codex.responses(selectedModel.slice('openai-codex/'.length)),
+      providerOptions: {
+        openai: {
+          store: false,
+          reasoningEffort: 'medium',
+          reasoningSummary: 'auto',
+          instructions,
+          systemMessageMode: 'remove',
+        },
+      },
+    };
+  }
+
+  throw new Error(`Unsupported model: ${selectedModel}`);
+}
 
 app.get('/api/models', (_req, res) => {
   res.json(MODELS);
@@ -72,13 +95,15 @@ app.post('/api/chat', async (req, res) => {
     // Convert UI messages to model messages
     const modelMessages = await convertToModelMessages(messages);
 
-    const selectedModel = MODELS.find(m => m.id === modelId)?.id || 'google/gemini-3-flash-preview';
+    const system = SYSTEM_PROMPT + contextHint + "\n\nImportant: Use internal reasoning (thinking) before responding or calling tools. Explain your steps.";
+    const { model, providerOptions } = await resolveSelectedModel(modelId, system);
 
     const result = streamText({
-      model: openrouter(selectedModel),
-      system: SYSTEM_PROMPT + contextHint + "\n\nImportant: Use internal reasoning (thinking) before responding or calling tools. Explain your steps.",
+      model,
+      system: providerOptions ? undefined : system,
       messages: modelMessages,
       tools,
+      providerOptions,
       maxSteps: 8,
       stopWhen: stepCountIs(8),
       abortSignal: AbortSignal.timeout(120_000),
@@ -94,6 +119,6 @@ app.post('/api/chat', async (req, res) => {
 const PORT = 3001;
 app.listen(PORT, () => {
   console.log(`Agent API server running on http://localhost:${PORT}`);
-  console.log(`Default model: google/gemini-3-flash-preview`);
+  console.log(`Default model: ${DEFAULT_MODEL_ID}`);
   console.log(`Available: ${MODELS.map(m => m.name).join(', ')}`);
 });

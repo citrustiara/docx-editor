@@ -24,14 +24,29 @@ npm start
 
 This starts:
 - **Frontend**: http://localhost:5173 (Vite dev server)
-- **API Server**: http://localhost:3001 (Express + OpenRouter)
+- **API Server**: http://localhost:3001 (Express + ChatGPT Codex subscription by default)
 
-## Environment
+## Codex Subscription Auth
 
-The OpenRouter API key must be set in your environment:
+The agent uses Pi's ChatGPT Plus/Pro Codex OAuth credentials from `~/.pi/agent/auth.json`.
 
 ```bash
-export OPENROUTER_API_KEY=sk-or-v1-...
+pi
+/login   # choose "ChatGPT Plus/Pro (Codex)"
+npm start
+```
+
+Codex models are selected in the toolbar and use ids like `openai-codex/gpt-5.5`.
+
+Optional overrides:
+
+```bash
+# Use a different Pi auth file
+export PI_CODEX_AUTH_FILE=/path/to/auth.json
+
+# Or provide a Codex access token directly
+export OPENAI_CODEX_ACCESS_TOKEN=...
+export OPENAI_CODEX_ACCOUNT_ID=... # only needed if the token is not a JWT with the account id
 ```
 
 ## How It Works
@@ -63,7 +78,7 @@ export OPENROUTER_API_KEY=sk-or-v1-...
 
 1. User sends a message in the agent chat
 2. Frontend sends messages to `/api/chat` with editor context
-3. Server streams response from OpenRouter using AI SDK
+3. Server streams response from ChatGPT Codex subscription auth using AI SDK
 4. When the model calls a tool, AI SDK forwards it to the client
 5. Client executes the tool against the live DocxEditor
 6. Tool result goes back to the model for the next step
